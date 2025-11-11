@@ -1,4 +1,4 @@
-__version__ = "0.0.2"  # Hatch will update this
+__version__ = "0.0.3"  # Hatch will update this
 
 
 def version() -> str:
