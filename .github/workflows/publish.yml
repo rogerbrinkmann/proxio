@@ -1,0 +1,55 @@
+name: Publish Python Package
+
+# Trigger the workflow only when a new GitHub Release is published
+on:
+  release:
+    types: [published]
+
+# This job ensures tests pass before building and publishing
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x' 
+      - name: Install dependencies (uv)
+        run: pip install uv
+      - name: Install project and dev dependencies
+        run: uv sync --dev
+      - name: Run tests
+        run: pytest
+
+  
+  pypi-publish:
+    needs: [test]
+    runs-on: ubuntu-latest
+
+    environment:
+      name: release
+      url: https://pypi.org/project/proxio/
+
+    # IMPORTANT: This is mandatory for Trusted Publishing (OIDC)
+    permissions:
+      id-token: write # Required to fetch the short-lived token
+      contents: write # Required to check out code
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Hatch
+        run: pip install hatch
+
+      - name: Build sdist and wheel distributions
+        run: hatch build
+
+      - name: Publish distribution 📦 to PyPI
+        # This is the official PyPA action that uses the OIDC token
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # No 'password' or 'username' is needed thanks to Trusted Publishing!
